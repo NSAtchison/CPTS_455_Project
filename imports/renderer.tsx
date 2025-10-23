@@ -3,6 +3,9 @@ import { createRoot } from "react-dom/client";
 import { ThemeProvider, CssBaseline, createTheme } from "@mui/material";
 import App from "./App";
 
+// DONT TOUCH THIS FILE UNLESS YOU KNOW WHAT YOU'RE DOING, 
+// THIS IS JUST STARTING THE FRONT END OF THE APP
+
 const theme = createTheme({
   palette: {
     mode: "dark",
