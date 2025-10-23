@@ -15,10 +15,23 @@ import path from "path";
 import { assetPath, createWindow, getAsset } from "./mainConstants"
 import { ipcEmitAll } from "./ipcListeners";
 import { ipcListenerKeys } from "./ipcPreloadHelpers";
+import { startTCPServer } from "./TCPSever";
+import { randomUUID } from "crypto";
+import * as net from "net";
+
+interface Peer {
+  id: string;
+  name: string;
+  host: string;
+  port: number;
+  socket: net.Socket;
+}
 
 // This is the webpack entry point. It is what starts everything.
 // This runs in the main process.
 process.title = "Electron Template (Change Me)";
+export const instanceID = randomUUID();
+export const peers: Map<string, Peer> = new Map();
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
@@ -165,6 +178,10 @@ const createSplash = async () => {
     ///////////////////////////////
     // Put your startup logic here
     ///////////////////////////////
+
+    await Promise.all([
+        startTCPServer(),
+    ])
 
     ////////////////////////////////////////////////////////////
     // Then show your main window and destroy the splash screen

@@ -13,6 +13,12 @@ export const isRenderer = () => {
     return process.type === "renderer";
 };
 
+export const ports = {
+    TCPServerPort: 0,
+    discoveryPort: 41234,
+    discoveryInternal: 3000,
+}
+
 export const forceIpcType = <T extends Record<string,(event: Electron.IpcMainInvokeEvent, arguments_: any) => Promise<any>>,>(v: T,) => v;
 
 export const routes = {

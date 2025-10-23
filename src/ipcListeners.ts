@@ -13,6 +13,7 @@ import { BrowserWindow } from "electron";
 
 export type ipcListenerHandlersType = {
     testListener: (serverSays: string) => void;
+    
 };
 // This is a conveniences function to emit to a render listener on the server type safely
 // Don't modify this unless you know what you are doing

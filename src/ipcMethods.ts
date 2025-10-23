@@ -37,6 +37,9 @@ export const ipcMethodHandlers = forceIpcType({
         const { homedir } = await import("os");
         return (argument1 + argument2 + "Called On Main where homedir is: " + homedir());
     },
+    startTCPServer: async ( _event ) => {
+        
+    },
 } as const);
 
 export type ipcMethodHandlersType = typeof ipcMethodHandlers;
