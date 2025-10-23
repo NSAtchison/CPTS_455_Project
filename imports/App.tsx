@@ -1,36 +1,48 @@
-import React from "react";
-import { Box, ThemeProvider } from "@mui/material";
-import { ExampleButton } from "./ui/ExampleButton";
-import { theme } from "./api/theme";
-import { CssBaseline, Stack } from "@mui/material";
-import { Navigate, RouterProvider, createHashRouter } from "react-router-dom";
-import { routes } from './api/constants';
+import React, { useState, useEffect } from "react";
+import { Box, Typography, TextField, Button, Paper } from "@mui/material";
 
-// Try to avoid having much, if any, logic in this file.
-// This is always loaded, so we want to keep it light an small.
-const MainPage = React.memo(() => (
-    <ThemeProvider theme={theme}>
-        <Box style={{padding: 10, boxSizing: "border-box", width: "100%", height: "100%",}}>
-            <ExampleButton />
-        </Box>
-    </ThemeProvider>
-));
+export default function App() {
+  const [messages, setMessages] = useState<string[]>([]);
+  const [input, setInput] = useState("");
 
-const router = createHashRouter([
-    { path: "*", element: <Navigate to={routes.mainPage} />},
-    {
-        path: routes.mainPage,
-        element: <MainPage />
-    },
-]);
+  useEffect(() => {
+    window.api.onChatMessage((msg: { text: string }) => {
+      setMessages((prev) => [...prev, msg.text]);
+    });
+  }, []);
 
-export const App = React.memo(() => {
-    return (
-        <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <Stack sx={{height: "100vh", boxSizing: "border-box", overflow: "hidden"}}>
-                <RouterProvider router={router} />
-            </Stack>
-        </ThemeProvider>
-    )
-})
+  const sendMessage = () => {
+    if (input.trim()) {
+      window.api.sendChat(input);
+      setMessages((prev) => [...prev, `Me: ${input}`]);
+      setInput("");
+    }
+  };
+
+  return (
+    <Box p={2} display="flex" flexDirection="column" height="100vh">
+      <Typography variant="h5" gutterBottom>
+        LAN Chat
+      </Typography>
+
+      <Paper sx={{ flexGrow: 1, overflowY: "auto", mb: 2, p: 2 }} elevation={3}>
+        {messages.map((msg, i) => (
+          <Typography key={i}>{msg}</Typography>
+        ))}
+      </Paper>
+
+      <Box display="flex" gap={1}>
+        <TextField
+          fullWidth
+          label="Message"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+        />
+        <Button variant="contained" onClick={sendMessage}>
+          Send
+        </Button>
+      </Box>
+    </Box>
+  );
+}
