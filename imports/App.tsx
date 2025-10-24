@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, TextField, Button, Paper } from "@mui/material";
+import { Box, Typography, TextField, Button, Paper, Stack, IconButton } from "@mui/material";
+import { SettingsMenu } from "./ui/SettingsMenu";
 
 export default function App() {
   const [messages, setMessages] = useState<string[]>([]);
@@ -21,9 +22,12 @@ export default function App() {
 
   return (
     <Box p={2} display="flex" flexDirection="column" height="100vh">
-      <Typography variant="h5" gutterBottom>
-        LAN Chat
-      </Typography>
+      <Stack direction="row">
+        <Typography variant="h5" gutterBottom>
+          LAN Chat
+        </Typography>
+        <SettingsMenu />
+      </Stack>
 
       <Paper sx={{ flexGrow: 1, overflowY: "auto", mb: 2, p: 2 }} elevation={3}>
         {messages.map((msg, i) => (
