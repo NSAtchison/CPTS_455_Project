@@ -9,16 +9,22 @@ const DISCOVERY_MSG = JSON.stringify({
   id: INSTANCE_ID,
 });
 
+
 export const startLANDiscovery = (win: BrowserWindow) => {
     // UDP socket used for discovering other users
     const discoverySocket = dgram.createSocket("udp4");
     
 
+    const discoveredPeers = new Set<string>();
+
     discoverySocket.on("message", (msg, rinfo) => {
       try {
         const data = JSON.parse(msg.toString());
 
-        if (data.id === INSTANCE_ID) return;
+        if (data.id === INSTANCE_ID) return; // ignore self
+        if (discoveredPeers.has(data.id)) return; // ignore already discovered peers
+
+        discoveredPeers.add(data.id);
 
         if (data.type === "LAN_CHAT_DISCOVERY") {
           console.log("Found user:", rinfo.address);
@@ -28,29 +34,28 @@ export const startLANDiscovery = (win: BrowserWindow) => {
             id: INSTANCE_ID,
           });
 
-          // Tell the other user that we exist
+          // Reply to DISCOVERY_PORT to ensure the peer sees it
           discoverySocket.send(
             Buffer.from(response),
             DISCOVERY_PORT,
             rinfo.address
           );
 
-          // Notify Front-End that we have found another user to possibly chat with
-          win.webContents.send("user-found", { ip: rinfo.address })
-
-          // Connect to this peer
+          win.webContents.send("user-found", { ip: rinfo.address });
           connectToPeer(rinfo.address, win, data.id);
         }
-        // ✅ Also handle incoming responses
+
         if (data.type === "LAN_CHAT_RESPONSE") {
           console.log("Got response from:", rinfo.address);
           win.webContents.send("user-found", { ip: rinfo.address });
           connectToPeer(rinfo.address, win, data.id);
         }
+
       } catch (err) {
         console.warn("Invalid discovery message:", msg.toString())
       }
     });
+
     
     discoverySocket.bind(DISCOVERY_PORT, () => {
       discoverySocket.setBroadcast(true);
