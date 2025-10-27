@@ -20,6 +20,8 @@ ipcMain.on("send-chat", (event, message: { id: string, text: string }) => {
   peers.forEach((socket) => socket.write(msg + "\n"));
 });
 
+ipcMain.handle("get-instance-id", () => INSTANCE_ID);
+
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -38,7 +40,7 @@ const createWindow = (): void => {
   // Open the DevTools.
   // mainWindow.webContents.openDevTools();
 
-  startTCPServer(mainWindow);
+  startTCPServer(mainWindow, INSTANCE_ID);
   startLANDiscovery(mainWindow);
 };
 

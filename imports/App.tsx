@@ -5,6 +5,15 @@ import { SettingsMenu } from "./ui/SettingsMenu";
 export default function App() {
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState("");
+  const [instanceId, setInstanceId] = useState("");
+
+  useEffect(() => {
+  const fetchId = async () => {
+    const id = await window.api.getInstanceId();
+    setInstanceId(id);
+  };
+  fetchId();
+}, []);
 
   useEffect(() => {
     window.api.onChatMessage((msg: { text: string }) => {
@@ -14,7 +23,7 @@ export default function App() {
 
   const sendMessage = () => {
     if (input.trim()) {
-      window.api.sendChat(input);
+      window.api.sendChat({ id: instanceId, text: input });
       setMessages((prev) => [...prev, `Me: ${input}`]);
       setInput("");
     }

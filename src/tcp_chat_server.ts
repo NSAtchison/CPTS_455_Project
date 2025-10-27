@@ -1,12 +1,11 @@
 import { BrowserWindow } from "electron";
 import net from "net"
-import { INSTANCE_ID } from "./main";
 
 const TCP_PORT = 5001;
 
 export const peers: net.Socket[] = []
 
-export const startTCPServer = (win: BrowserWindow) => {
+export const startTCPServer = (win: BrowserWindow, INSTANCE_ID: `${string}-${string}-${string}-${string}-${string}`) => {
     const tcpServer = net.createServer((socket) => {
         console.log("New client connected:", socket.remoteAddress);
         peers.push(socket);
