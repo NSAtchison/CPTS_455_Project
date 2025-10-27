@@ -30,9 +30,8 @@ const createWindow = (): void => {
   // Open the DevTools.
   // mainWindow.webContents.openDevTools();
 
-  const discoverySocket = startLANDiscovery(mainWindow);
-
-  const tcpSever = startTCPServer(mainWindow);
+  startTCPServer(mainWindow);
+  startLANDiscovery(mainWindow);
 };
 
 // This method will be called when Electron has finished

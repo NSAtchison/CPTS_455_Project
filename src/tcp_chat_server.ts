@@ -31,17 +31,17 @@ export const startTCPServer = (win: BrowserWindow) => {
     tcpServer.listen(TCP_PORT, () => {
         console.log(`TCP Server listnening on port ${TCP_PORT}`)
     })
-    
-    const connectToPeer = (ip: string) => {
-        const client = net.createConnection({ host: ip, port: TCP_PORT }, () => {
-            console.log("Connect to:", ip);
-        });
-    
-        client.on("data", (data) => {
-            const message = data.toString();
-            win.webContents.send("chat-message", {text: message});
-        })
-    
-        client.on("end", () => console.log("Disconnected from:", ip));
-    }
+}
+
+export const connectToPeer = (ip: string, win: BrowserWindow) => {
+    const client = net.createConnection({ host: ip, port: TCP_PORT }, () => {
+        console.log("Connect to:", ip);
+    });
+
+    client.on("data", (data) => {
+        const message = data.toString();
+        win.webContents.send("chat-message", {text: message});
+    })
+
+    client.on("end", () => console.log("Disconnected from:", ip));
 }
