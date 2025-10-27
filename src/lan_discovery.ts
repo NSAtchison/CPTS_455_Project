@@ -42,13 +42,13 @@ export const startLANDiscovery = (win: BrowserWindow) => {
           );
 
           win.webContents.send("user-found", { ip: rinfo.address });
-          connectToPeer(rinfo.address, win, data.id);
+          connectToPeer(rinfo.address, win, INSTANCE_ID, data.id);
         }
 
         if (data.type === "LAN_CHAT_RESPONSE") {
           console.log("Got response from:", rinfo.address);
           win.webContents.send("user-found", { ip: rinfo.address });
-          connectToPeer(rinfo.address, win, data.id);
+          connectToPeer(rinfo.address, win, INSTANCE_ID, data.id);
         }
 
       } catch (err) {

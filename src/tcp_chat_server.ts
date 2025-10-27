@@ -9,27 +9,34 @@ export const startTCPServer = (win: BrowserWindow, INSTANCE_ID: `${string}-${str
     const tcpServer = net.createServer((socket) => {
         console.log("New client connected:", socket.remoteAddress);
         peers.push(socket);
+
+        let buffer = "";
     
         // Listen for data from the clients
         socket.on("data", (data) => {
-            const lines = data.toString().split("\n");
-            for (const line of lines) {
-                if (!line.trim()) continue;
+            buffer += data.toString();
+            let idx: number;
+
+            while ((idx = buffer.indexOf("\n")) >= 0) {
+                const line = buffer.slice(0, idx).trim();
+                buffer = buffer.slice(idx + 1);
+
+                if (!line) continue;
 
                 try {
-                    const msg = JSON.parse(line); // { id, text }
+                const msg: { id: string; text: string } = JSON.parse(line);
 
-                    // Ignore messages that came from ourselves
-                    if (msg.id === INSTANCE_ID) continue;
+                // Ignore messages from self
+                if (msg.id === INSTANCE_ID) continue;
 
-                    // Broadcast to all other peers except sender
-                    peers.forEach((s) => {
-                        if (s !== socket) s.write(line + "\n");
-                    });
+                // Broadcast to all other connected clients
+                peers.forEach((s) => {
+                    if (s !== socket) s.write(JSON.stringify(msg) + "\n");
+                });
 
-                    // Send to frontend
-                    win.webContents.send("chat-message", { text: msg.text });
-                } catch {
+                // Notify renderer
+                win.webContents.send("chat-message", { text: msg.text });
+                } catch (err) {
                     console.warn("Invalid JSON message:", line);
                 }
             }
@@ -49,7 +56,7 @@ export const startTCPServer = (win: BrowserWindow, INSTANCE_ID: `${string}-${str
 
 const connectedPeers = new Set<string>();
 
-export const connectToPeer = (ip: string, win: BrowserWindow, peerId?: string) => {
+export const connectToPeer = (ip: string, win: BrowserWindow, INSTANCE_ID: `${string}-${string}-${string}-${string}-${string}`, peerId?: string) => {
     if(peerId && connectedPeers.has(peerId)) return;
     if(peerId) connectedPeers.add(peerId)
     
@@ -58,10 +65,34 @@ export const connectToPeer = (ip: string, win: BrowserWindow, peerId?: string) =
         peers.push(client)
     });
 
+    let buffer = "";
+
     client.on("data", (data) => {
-        const message = data.toString();
-        win.webContents.send("chat-message", {text: message});
-    })
+        buffer += data.toString();
+
+        let idx: number;
+        while ((idx = buffer.indexOf("\n")) >= 0) {
+            const line = buffer.slice(0, idx).trim();
+            buffer = buffer.slice(idx + 1);
+
+            if (!line) continue;
+
+            try {
+                const msg: { id: string; text: string } = JSON.parse(line);
+
+                if (msg.id === INSTANCE_ID) continue;
+
+                // Broadcast to all other clients
+                peers.forEach((s) => {
+                    if (s !== client) s.write(JSON.stringify(msg) + "\n");
+                });
+
+                win.webContents.send("chat-message", { text: msg.text });
+            } catch (err) {
+                console.warn("Invalid JSON message:", line);
+            }
+        }
+    });
 
     client.on("end", () => {
         if(peerId) connectedPeers.delete(peerId);
