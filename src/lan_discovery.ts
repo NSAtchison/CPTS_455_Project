@@ -31,7 +31,7 @@ export const startLANDiscovery = (win: BrowserWindow) => {
           // Tell the other user that we exist
           discoverySocket.send(
             Buffer.from(response),
-            rinfo.port,
+            DISCOVERY_PORT,
             rinfo.address
           );
 

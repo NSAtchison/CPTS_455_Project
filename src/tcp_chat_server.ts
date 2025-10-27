@@ -36,7 +36,7 @@ export const startTCPServer = (win: BrowserWindow) => {
 const connectedPeers = new Set<string>();
 
 export const connectToPeer = (ip: string, win: BrowserWindow, peerId?: string) => {
-    if(peerId && connectedPeers.has(ip)) return;
+    if(peerId && connectedPeers.has(peerId)) return;
     if(peerId) connectedPeers.add(peerId)
     
     const client = net.createConnection({ host: ip, port: TCP_PORT }, () => {
