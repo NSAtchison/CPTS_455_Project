@@ -15,8 +15,9 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
-ipcMain.on("send-chat", (event, message: string) => {
-  peers.forEach((socket) => socket.write(message + "\n"));
+ipcMain.on("send-chat", (event, message: { id: string, text: string }) => {
+  const msg = JSON.stringify(message);
+  peers.forEach((socket) => socket.write(msg + "\n"));
 });
 
 const createWindow = (): void => {
