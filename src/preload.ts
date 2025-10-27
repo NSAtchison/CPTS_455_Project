@@ -6,4 +6,7 @@ contextBridge.exposeInMainWorld("api", {
   sendChat: (text: string) => ipcRenderer.send("send-chat", text),
   onChatMessage: (cb: (msg: { text: string }) => void) =>
     ipcRenderer.on("chat-message", (_, msg) => cb(msg)),
+  onUserFound: (cb: (user: { ip: string}) => void) => {
+    ipcRenderer.on("user-found", (_, user) => cb(user));
+  },
 });
