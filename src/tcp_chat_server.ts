@@ -3,18 +3,18 @@ import net from "net"
 
 const TCP_PORT = 5001;
 
+export const peers: net.Socket[] = []
+
 export const startTCPServer = (win: BrowserWindow) => {
-    const clients: net.Socket[] = []
-    
     const tcpServer = net.createServer((socket) => {
         console.log("New client connected:", socket.remoteAddress);
-        clients.push(socket);
+        peers.push(socket);
     
         // Listen for data from the clients
         socket.on("data", (data) => {
             const message = data.toString();
     
-            clients.forEach((s) => {
+            peers.forEach((s) => {
                 if(s !== socket) s.write(message);
             });
     
@@ -23,8 +23,8 @@ export const startTCPServer = (win: BrowserWindow) => {
     
         socket.on("close", () => {
             console.log("Client disconnected:", socket.remoteAddress);
-            const disconnect_index = clients.indexOf(socket);
-            if(disconnect_index >= 0) clients.splice(disconnect_index, 1);
+            const disconnect_index = peers.indexOf(socket);
+            if(disconnect_index !== -1) peers.splice(disconnect_index, 1);
         });
     });
     
@@ -41,6 +41,7 @@ export const connectToPeer = (ip: string, win: BrowserWindow, peerId?: string) =
     
     const client = net.createConnection({ host: ip, port: TCP_PORT }, () => {
         console.log("Connect to:", ip);
+        peers.push(client)
     });
 
     client.on("data", (data) => {
@@ -48,5 +49,9 @@ export const connectToPeer = (ip: string, win: BrowserWindow, peerId?: string) =
         win.webContents.send("chat-message", {text: message});
     })
 
-    client.on("end", () => console.log("Disconnected from:", ip));
+    client.on("end", () => {
+        if(peerId) connectedPeers.delete(peerId);
+        const idx = peers.indexOf(client);
+        if(idx !== -1) peers.splice(idx, 1);
+    });
 }
