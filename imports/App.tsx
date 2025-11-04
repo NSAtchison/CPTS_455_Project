@@ -32,7 +32,7 @@ export default function App() {
     setMessages((prev) => [...prev, msg]);
 
     window.api.sendChat(input);
-    
+
     setInput("");
   };
 

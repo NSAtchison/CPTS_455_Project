@@ -14,7 +14,7 @@ contextBridge.exposeInMainWorld("api", {
     username = name;
   },
   getInstanceId: () => instanceID,
-  sendChat: (msg: string) => ipcRenderer.send("send-chat", {username, msg, instanceID}),
+  sendChat: (text: string) => ipcRenderer.send("send-chat", {username, msg: text, instanceID}),
   onChatMessage: (cb: (msg: {username: string, text: string, instanceID?: string}) => void) =>
     ipcRenderer.on("chat-message", (_, msg) => cb(msg)),
 });
