@@ -1,6 +1,6 @@
 import { BrowserWindow } from "electron";
 import dgram from "dgram"
-import { connectToPeer } from "./tcp_chat_server";
+import { io as ClientIO, Socket} from "socket.io-client";
 import { INSTANCE_ID } from "./main";
 
 const DISCOVERY_PORT = 5000;
@@ -9,22 +9,17 @@ const DISCOVERY_MSG = JSON.stringify({
   id: INSTANCE_ID,
 });
 
+const connectedPeers = new Set<string>();
 
-export const startLANDiscovery = (win: BrowserWindow) => {
+export const startLANDiscovery = (win: BrowserWindow, SOCKET_PORT: number) => {
     // UDP socket used for discovering other users
     const discoverySocket = dgram.createSocket("udp4");
     
-
-    const discoveredPeers = new Set<string>();
-
     discoverySocket.on("message", (msg, rinfo) => {
       try {
         const data = JSON.parse(msg.toString());
 
         if (data.id === INSTANCE_ID) return; // ignore self
-        if (discoveredPeers.has(data.id)) return; // ignore already discovered peers
-
-        discoveredPeers.add(data.id);
 
         if (data.type === "LAN_CHAT_DISCOVERY") {
           console.log("Found user:", rinfo.address);
@@ -37,18 +32,16 @@ export const startLANDiscovery = (win: BrowserWindow) => {
           // Reply to DISCOVERY_PORT to ensure the peer sees it
           discoverySocket.send(
             Buffer.from(response),
-            DISCOVERY_PORT,
+            rinfo.port,
             rinfo.address
           );
 
-          win.webContents.send("user-found", { ip: rinfo.address });
-          connectToPeer(rinfo.address, win, INSTANCE_ID, data.id);
+          connectToPeer(win, rinfo.address, SOCKET_PORT);
         }
 
         if (data.type === "LAN_CHAT_RESPONSE") {
           console.log("Got response from:", rinfo.address);
-          win.webContents.send("user-found", { ip: rinfo.address });
-          connectToPeer(rinfo.address, win, INSTANCE_ID, data.id);
+          connectToPeer(win, rinfo.address, SOCKET_PORT);
         }
 
       } catch (err) {
@@ -72,6 +65,31 @@ export const startLANDiscovery = (win: BrowserWindow) => {
         "255.255.255.255"
       );
     }, 5000)
+}
 
-    return discoverySocket;
+const connectToPeer = (win: BrowserWindow, ip: string, port: number) => {
+  const key = `${ip}:${port}`;
+  // If peer is already connected, don't connect again
+  if(connectedPeers.has(key)) return;
+  connectedPeers.add(key);
+
+  console.log("Connecting to peer Socket.IO server:", key);
+
+  const socket: Socket = ClientIO(`http://${ip}:${port}`, {
+    reconnectionAttempts: 3,
+    timeout: 2000,
+  });
+
+  socket.on("connect", () => {
+    console.log("Connected to peer:", ip);
+  });
+
+  socket.on("chat-message", (msg) => {
+    win.webContents.send("chat-message", msg);
+  })
+
+  socket.on("disconnect", () => {
+    console.log("Disconnected from peer:", ip);
+    connectedPeers.delete(key);
+  })
 }

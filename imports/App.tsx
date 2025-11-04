@@ -1,32 +1,32 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, TextField, Button, Paper, Stack, IconButton } from "@mui/material";
+import { Box, Typography, TextField, Button, Paper, Stack } from "@mui/material";
 import { SettingsMenu } from "./ui/SettingsMenu";
 
 export default function App() {
-  const [messages, setMessages] = useState<string[]>([]);
+  const [username, setUsername] = useState<string | undefined>(undefined);
+  const [messages, setMessages] = useState<{ username: string; text: string }[]>([]);
   const [input, setInput] = useState("");
-  const [instanceId, setInstanceId] = useState("");
 
   useEffect(() => {
-  const fetchId = async () => {
-    const id = await window.api.getInstanceId();
-    setInstanceId(id);
-  };
-  fetchId();
-}, []);
+    const name = prompt("Enter your username:");
+    if(name && name.trim() != "") {
+      setUsername(name);
+      window.api.setUsername(name);
+    } else {
+      setUsername("Anonymous");
+      window.api.setUsername("Anonymous");
+    }
 
-  useEffect(() => {
-    window.api.onChatMessage((msg: { text: string }) => {
-      setMessages((prev) => [...prev, msg.text]);
+    window.api.onChatMessage((msg) => {
+      setMessages((prev) => [...prev, msg]);
     });
-  }, []);
+  }, [])
 
   const sendMessage = () => {
-    if (input.trim()) {
-      window.api.sendChat({ id: instanceId, text: input });
-      setMessages((prev) => [...prev, `Me: ${input}`]);
-      setInput("");
-    }
+    if (!input.trim()) return;
+    window.api.sendChat(input);
+    setMessages((prev) => [...prev, { username: username || "Me", text: input}]);
+    setInput("");
   };
 
   return (
@@ -40,7 +40,7 @@ export default function App() {
 
       <Paper sx={{ flexGrow: 1, overflowY: "auto", mb: 2, p: 2 }} elevation={3}>
         {messages.map((msg, i) => (
-          <Typography key={i}>{msg}</Typography>
+          <Typography key={i}>{msg.username}: {msg.text}</Typography>
         ))}
       </Paper>
 

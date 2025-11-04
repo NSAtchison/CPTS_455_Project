@@ -2,12 +2,14 @@
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 import { contextBridge, ipcRenderer } from "electron";
 
+let username = "Anonymouos";
+
 contextBridge.exposeInMainWorld("api", {
-  getInstanceId: async (): Promise<string> => {
-    return ipcRenderer.invoke("get-instance-id");
+  setUsername: (name: string) => {
+    username = name;
   },
-  sendChat: (msg: { id: string; text: string }) => ipcRenderer.send("send-chat", msg),
-  onChatMessage: (cb: (msg: { text: string }) => void) =>
+  sendChat: (msg: string) => ipcRenderer.send("send-chat", {username, msg}),
+  onChatMessage: (cb: (msg: {username: string, text: string}) => void) =>
     ipcRenderer.on("chat-message", (_, msg) => cb(msg)),
   onUserFound: (cb: (user: { ip: string}) => void) => {
     ipcRenderer.on("user-found", (_, user) => cb(user));
