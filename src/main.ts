@@ -17,6 +17,7 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+
 ipcMain.handle("get-instance-id", () => INSTANCE_ID);
 
 const createWindow = (): void => {
@@ -35,7 +36,11 @@ const createWindow = (): void => {
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
+
+  mainWindow.webContents.once("did-finish-load", () => {
+    mainWindow.webContents.send("set-instance-id", INSTANCE_ID);
+  });
 
   const httpServer = createServer();
   const io = new Server(httpServer, {

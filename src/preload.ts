@@ -3,15 +3,18 @@
 import { contextBridge, ipcRenderer } from "electron";
 
 let username = "Anonymouos";
+let instanceID: string | undefined = undefined;
+
+ipcRenderer.on("set-instance-id", (_, id) => {
+  instanceID = id;
+})
 
 contextBridge.exposeInMainWorld("api", {
   setUsername: (name: string) => {
     username = name;
   },
-  sendChat: (msg: string) => ipcRenderer.send("send-chat", {username, msg}),
-  onChatMessage: (cb: (msg: {username: string, text: string}) => void) =>
+  getInstanceId: () => instanceID,
+  sendChat: (msg: string) => ipcRenderer.send("send-chat", {username, msg, instanceID}),
+  onChatMessage: (cb: (msg: {username: string, text: string, instanceID?: string}) => void) =>
     ipcRenderer.on("chat-message", (_, msg) => cb(msg)),
-  onUserFound: (cb: (user: { ip: string}) => void) => {
-    ipcRenderer.on("user-found", (_, user) => cb(user));
-  },
 });
