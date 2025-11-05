@@ -72,7 +72,7 @@ const createWindow = (): void => {
     io.emit("chat-message", message);
   });
 
-  startLANDiscovery(mainWindow, PORT);
+  startLANDiscovery(mainWindow, PORT, INSTANCE_ID);
 
   ipcMain.on("peer-found", (_, peer) => {
     const exists = discoveredPeers.some((p) => p.id === peer.id);

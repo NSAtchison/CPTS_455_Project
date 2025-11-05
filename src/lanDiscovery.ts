@@ -1,17 +1,28 @@
 import { BrowserWindow } from "electron";
 import dgram from "dgram";
+import os from "os";
 // import { io as ClientIO, Socket } from "socket.io-client";
-import { INSTANCE_ID } from "./main";
 
 const DISCOVERY_PORT = 5000;
-const DISCOVERY_MSG = JSON.stringify({
-  type: "LAN_CHAT_DISCOVERY",
-  id: INSTANCE_ID,
-});
 
-const connectedPeers = new Set<string>();
+const getLocalIPs = () => {
+  const interfaces = os.networkInterfaces();
+  const ips: string[] = [];
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]!) {
+      if (iface.family === "IPv4" && !iface.internal) {
+        ips.push(iface.address);
+      }
+    }
+  }
+  return ips;
+}
 
-export const startLANDiscovery = (win: BrowserWindow, SOCKET_PORT: number) => {
+const localIPs = getLocalIPs();
+
+const discoveredPeers: { id: string; ip: string }[] = [];
+
+export const startLANDiscovery = (win: BrowserWindow, SOCKET_PORT: number, INSTANCE_ID: `${string}-${string}-${string}-${string}-${string}`) => {
   // UDP socket used for discovering other users
   const discoverySocket = dgram.createSocket("udp4");
 
@@ -19,7 +30,16 @@ export const startLANDiscovery = (win: BrowserWindow, SOCKET_PORT: number) => {
     try {
       const data = JSON.parse(message.toString());
 
-      if (data.id === INSTANCE_ID) return; // ignore self
+      if (localIPs.includes(rinfo.address)) return; // ignore self
+
+      const peer = { id: data.id, ip: rinfo.address };
+      const exists = discoveredPeers.some(p => p.id === peer.id);
+
+      if (!exists) {
+        discoveredPeers.push(peer);
+        console.log("Discovered peer:", peer);
+        win.webContents.send("peer-list-updated", discoveredPeers);
+      }
 
       if (data.type === "LAN_CHAT_DISCOVERY") {
         console.log("Found user:", rinfo.address);
@@ -33,20 +53,15 @@ export const startLANDiscovery = (win: BrowserWindow, SOCKET_PORT: number) => {
         discoverySocket.send(Buffer.from(response), rinfo.port, rinfo.address);
 
         // connectToPeer(win, rinfo.address, SOCKET_PORT);
-        win.webContents.send("peer-found", {
-          ip: rinfo.address,
-          id: data.id,
-        })
       }
-
-      if (data.type === "LAN_CHAT_RESPONSE") {
-        console.log("Got response from:", rinfo.address);
-        // connectToPeer(win, rinfo.address, SOCKET_PORT);
-        win.webContents.send("peer-found", {
-          ip: rinfo.address,
-          id: data.id,
-        })
-      }
+      // if (data.type === "LAN_CHAT_RESPONSE") {
+      //   console.log("Got response from:", rinfo.address);
+      //   // connectToPeer(win, rinfo.address, SOCKET_PORT);
+      //   win.webContents.send("peer-found", {
+      //     ip: rinfo.address,
+      //     id: data.id,
+      //   })
+      // }
     } catch {
       console.warn("Invalid discovery message:", message.toString());
     }
@@ -59,10 +74,15 @@ export const startLANDiscovery = (win: BrowserWindow, SOCKET_PORT: number) => {
 
   // Broadcast our presence every 5 seconds
   setInterval(() => {
+    const msg = JSON.stringify({
+      type: "LAN_CHAT_DISCOVERY",
+      id: INSTANCE_ID,
+    });
+    
     discoverySocket.send(
-      Buffer.from(DISCOVERY_MSG),
+      Buffer.from(msg),
       0,
-      DISCOVERY_MSG.length,
+      msg.length,
       DISCOVERY_PORT,
       "255.255.255.255",
     );
