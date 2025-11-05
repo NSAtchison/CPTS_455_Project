@@ -56,9 +56,11 @@ const createWindow = (): void => {
     console.log("New Socket.IO connection:", socket.id);
 
     socket.on("chat-message", (message) => {
+      if (message.senderId === INSTANCE_ID) return;
+
       console.log("Message received:", message);
       // Broadcast to all others
-      socket.broadcast.emit("chat-message", message);
+      io.emit("chat-message", message);
       // Send to Renderer
       mainWindow.webContents.send("chat-message", message);
     });
@@ -70,6 +72,11 @@ const createWindow = (): void => {
 
   ipcMain.on("send-chat", (_, message) => {
     io.emit("chat-message", message);
+
+    // Send to any outbound peer connections
+    for (const socket of connectedPeers.values()) {
+      socket.emit("chat-message", message);
+    }
   });
 
   startLANDiscovery(mainWindow, PORT, INSTANCE_ID);
