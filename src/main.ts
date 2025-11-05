@@ -16,6 +16,7 @@ const PORT = 5001;
 // ✅ Track discovered and connected peers
 const discoveredPeers: { id: string; ip: string }[] = [];
 const connectedPeers = new Map<string, Socket>();
+const seenMessages = new Set<string>();
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // eslint-disable-next-line unicorn/prefer-module
@@ -56,7 +57,8 @@ const createWindow = (): void => {
     console.log("New Socket.IO connection:", socket.id);
 
     socket.on("chat-message", (message) => {
-      if (message.senderId === INSTANCE_ID) return;
+      if (seenMessages.has(message.messageID)) return;
+      seenMessages.add(message.messageID)
 
       console.log("Message received:", message);
       // Broadcast to all others
@@ -71,6 +73,8 @@ const createWindow = (): void => {
   });
 
   ipcMain.on("send-chat", (_, message) => {
+    if (seenMessages.has(message.messageID)) return;
+    seenMessages.add(message.messageID)
     io.emit("chat-message", message);
 
     // Send to any outbound peer connections

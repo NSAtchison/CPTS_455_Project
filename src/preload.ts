@@ -1,6 +1,7 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 import { contextBridge, ipcRenderer } from "electron";
+import { randomUUID } from "crypto";
 
 let username = "Anonymouos";
 let instanceID: string | undefined = undefined;
@@ -15,7 +16,7 @@ contextBridge.exposeInMainWorld("api", {
   },
   getInstanceId: () => instanceID,
   sendChat: (text: string) =>
-    ipcRenderer.send("send-chat", { username, text, instanceID }),
+    ipcRenderer.send("send-chat", { username, text, instanceID, messageID: randomUUID() }),
   onChatMessage: (
     callback: (message: {
       username: string;
