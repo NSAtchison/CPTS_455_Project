@@ -1,6 +1,6 @@
 import { BrowserWindow } from "electron";
 import dgram from "dgram";
-import { io as ClientIO, Socket } from "socket.io-client";
+// import { io as ClientIO, Socket } from "socket.io-client";
 import { INSTANCE_ID } from "./main";
 
 const DISCOVERY_PORT = 5000;
@@ -32,12 +32,20 @@ export const startLANDiscovery = (win: BrowserWindow, SOCKET_PORT: number) => {
         // Reply to DISCOVERY_PORT to ensure the peer sees it
         discoverySocket.send(Buffer.from(response), rinfo.port, rinfo.address);
 
-        connectToPeer(win, rinfo.address, SOCKET_PORT);
+        // connectToPeer(win, rinfo.address, SOCKET_PORT);
+        win.webContents.send("peer-found", {
+          ip: rinfo.address,
+          id: data.id,
+        })
       }
 
       if (data.type === "LAN_CHAT_RESPONSE") {
         console.log("Got response from:", rinfo.address);
-        connectToPeer(win, rinfo.address, SOCKET_PORT);
+        // connectToPeer(win, rinfo.address, SOCKET_PORT);
+        win.webContents.send("peer-found", {
+          ip: rinfo.address,
+          id: data.id,
+        })
       }
     } catch {
       console.warn("Invalid discovery message:", message.toString());
@@ -59,31 +67,4 @@ export const startLANDiscovery = (win: BrowserWindow, SOCKET_PORT: number) => {
       "255.255.255.255",
     );
   }, 5000);
-};
-
-const connectToPeer = (win: BrowserWindow, ip: string, port: number) => {
-  const key = `${ip}:${port}`;
-  // If peer is already connected, don't connect again
-  if (connectedPeers.has(key)) return;
-  connectedPeers.add(key);
-
-  console.log("Connecting to peer Socket.IO server:", key);
-
-  const socket: Socket = ClientIO(`http://${ip}:${port}`, {
-    reconnectionAttempts: 3,
-    timeout: 2000,
-  });
-
-  socket.on("connect", () => {
-    console.log("Connected to peer:", ip);
-  });
-
-  socket.on("chat-message", (message) => {
-    win.webContents.send("chat-message", message);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("Disconnected from peer:", ip);
-    connectedPeers.delete(key);
-  });
 };
