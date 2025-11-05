@@ -13,6 +13,8 @@ declare global {
       sendChat: (text: string) => void;
       setUsername: (name: string) => void;
       getInstanceId: () => string;
+      onPeerListUpdated: (cb: (peers: { id: string; ip: string}[]) => void) => void;
+      connectToPeer: (ip: string) => void
     };
   }
 }

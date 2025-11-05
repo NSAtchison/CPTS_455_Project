@@ -11,9 +11,11 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
+  Menu,
 } from "@mui/material";
 import { SettingsMenu } from "./ui/SettingsMenu";
 import SettingsIcon from "@mui/icons-material/Settings";
+import ListIcon from '@mui/icons-material/List';
 
 export default function App() {
   const [username, setUsername] = useState("");
@@ -22,9 +24,16 @@ export default function App() {
     { username: string; text: string }[]
   >([]);
   const [input, setInput] = useState("");
+  const [peers, setPeers] = useState<{ id: string; ip: string }[]>([]);
 
   const [editUsername, setEditUsername] = useState("");
   const [openSettings, setOpenSettings] = useState(false);
+
+  const [peerListAnchorEl, setPeerListAnchorEl] = React.useState<undefined | HTMLElement>(undefined);
+  const open = Boolean(peerListAnchorEl);
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setPeerListAnchorEl(event.currentTarget);
+  };
 
   useEffect(() => {
     window.api.onChatMessage((message) => {
@@ -32,6 +41,12 @@ export default function App() {
       if (message.instanceID === myID) return;
       setMessages((previous) => [...previous, message]);
     });
+  }, []);
+
+  useEffect(() => {
+    window.api.onPeerListUpdated((newPeers) => {
+      setPeers(newPeers);
+    })
   }, []);
 
   const handleSetUsername = () => {
@@ -59,6 +74,10 @@ export default function App() {
     setOpenSettings(true);
   };
 
+  const handleClose = () => {
+    setPeerListAnchorEl(undefined);
+  };
+
   return (
     <Box display={"flex"} flexDirection={"column"} height={"100vh"} p={2}>
       <Stack direction={"row"}>
@@ -68,6 +87,16 @@ export default function App() {
         <IconButton onClick={handleSettingsOpen}>
           <SettingsIcon />
         </IconButton>
+        <IconButton onClick={handleClick}>
+          <ListIcon />
+        </IconButton>
+        <Menu anchorEl={peerListAnchorEl} open={open} onClose={handleClose}>
+          {peers.map((peer) => (
+            <Button key={peer.id} onClick={() => window.api.connectToPeer(peer.ip)}>
+              Connect to {peer.ip}
+            </Button>
+          ))}
+        </Menu>
         <SettingsMenu
           editUsername={editUsername}
           openSettings={openSettings}

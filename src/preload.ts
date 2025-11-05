@@ -23,4 +23,6 @@ contextBridge.exposeInMainWorld("api", {
       instanceID?: string;
     }) => void,
   ) => ipcRenderer.on("chat-message", (_, message) => callback(message)),
+  onPeerListUpdated: (cb: (peers: { id: string; ip: string}[]) => void) => ipcRenderer.on("peer-list-updated", (_, peers) => cb(peers)),
+  connectToPeer: (ip: string) => ipcRenderer.send("connect-to-peer", ip),
 });
