@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { startLANDiscovery } from "./lanDiscovery";
@@ -25,6 +25,11 @@ if (require("electron-squirrel-startup")) {
 }
 
 ipcMain.handle("get-instance-id", () => INSTANCE_ID);
+
+ipcMain.handle('open-file-dialog', async () => {
+  const result = await dialog.showOpenDialog({ properties: ['openFile'] });
+  return result.filePaths;
+});
 
 const createWindow = (): void => {
   // Create the browser window.

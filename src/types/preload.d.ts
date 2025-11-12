@@ -15,6 +15,7 @@ declare global {
       getInstanceId: () => string;
       onPeerListUpdated: (cb: (peers: { id: string; ip: string}[]) => void) => void;
       connectToPeer: (ip: string) => void
+      openFileDialog: () => void;
     };
   }
 }

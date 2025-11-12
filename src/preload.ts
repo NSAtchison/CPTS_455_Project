@@ -37,4 +37,5 @@ contextBridge.exposeInMainWorld("api", {
     });
   },
   connectToPeer: (ip: string) => ipcRenderer.send("connect-to-peer", ip),
+  openFileDialog: () => ipcRenderer.invoke('open-file-dialog'),
 });

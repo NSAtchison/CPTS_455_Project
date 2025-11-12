@@ -16,6 +16,7 @@ import {
 import { SettingsMenu } from "./ui/SettingsMenu";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ListIcon from '@mui/icons-material/List';
+import { UploadFile } from "@mui/icons-material";
 
 export default function App() {
   const [username, setUsername] = useState("");
@@ -69,6 +70,11 @@ export default function App() {
     setInput("");
   };
 
+  const uploadFile = async () => {
+    const filePaths = await window.api.openFileDialog();
+    console.log(filePaths);
+  };
+
   const handleSettingsOpen = () => {
     setEditUsername(username);
     setOpenSettings(true);
@@ -115,6 +121,9 @@ export default function App() {
       </Paper>
 
       <Box display={"flex"} gap={1}>
+        <Button variant={"text"} onClick={uploadFile}>
+          <UploadFile></UploadFile>
+        </Button>
         <TextField
           fullWidth
           label={"Message"}
