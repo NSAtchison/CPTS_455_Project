@@ -31,6 +31,13 @@ ipcMain.handle('open-file-dialog', async () => {
   return result.filePaths;
 });
 
+ipcMain.handle('read-file', async (_, filePath: string) => {
+  const fs = await import('fs/promises');
+  const buffer = await fs.readFile(filePath);
+  console.log(buffer.toString('base64'))
+  return buffer.toString('base64');
+});
+
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({

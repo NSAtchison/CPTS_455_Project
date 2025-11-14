@@ -11,12 +11,13 @@ declare global {
           instanceID?: string;
         }) => void,
       ) => void;
-      sendChat: (text: string) => void;
+      sendChat: (text: string, isFile: boolean, fileData?: string) => void;
       setUsername: (name: string) => void;
       getInstanceId: () => string;
       onPeerListUpdated: (cb: (peers: { id: string; ip: string}[]) => void) => void;
-      connectToPeer: (ip: string) => void
+      connectToPeer: (ip: string) => void;
       openFileDialog: () => string[];
+      readFileAsBase64: (string) => string;
     };
   }
 }

@@ -65,21 +65,23 @@ export default function App() {
 
     setMessages((previous) => [...previous, message]);
 
-    window.api.sendChat(input);
+    window.api.sendChat(input, false);
 
     setInput("");
   };
 
   const uploadFile = async () => {
     const filePaths: string[] = await window.api.openFileDialog();
-    
+    const filePath: string = filePaths[0];
+    const base64Data = await window.api.readFileAsBase64(filePath);
+
     const myID = window.api.getInstanceId();
-    const fileName: string = filePaths[0].split(/[/\\]/).pop() as string;
+    const fileName: string = filePath.split(/[/\\]/).pop() as string;
     const message = { username, text: fileName, instanceID: myID, isFile: true };
 
     setMessages((previous) => [...previous, message]);
 
-    window.api.sendChat(input);
+    window.api.sendChat(input, true, base64Data);
 
     setInput("");
   };
@@ -93,7 +95,7 @@ export default function App() {
     setPeerListAnchorEl(undefined);
   };
 
-  const handleFileClick = (file_name: string) => {
+  const handleFileDownload = (file_name: string) => {
     console.log("file clicked: ", file_name);
   }
 
@@ -129,12 +131,13 @@ export default function App() {
         {messages.map((message, index) => (
           <Typography key={index}>
             {message.isFile ? (
+              <span>{message.username}:
               <span
                 style={{ color: 'lightblue', textDecoration: 'underline', cursor: 'pointer' }}
-                onClick={() => handleFileClick(message.text)}
+                onClick={() => handleFileDownload(message.text)}
               >
                 {message.text}
-              </span>
+              </span></span>
             ) : (
               <span>{message.username}: {message.text}</span>
             )}

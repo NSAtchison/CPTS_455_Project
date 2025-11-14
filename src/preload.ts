@@ -15,12 +15,14 @@ contextBridge.exposeInMainWorld("api", {
     username = name;
   },
   getInstanceId: () => instanceID,
-  sendChat: (text: string) =>
+  sendChat: (text: string, isFile: boolean, fileData?: string) =>
   ipcRenderer.send("send-chat", { 
     username, 
     text, 
     instanceID, 
-    messageID: (globalThis.crypto as any).randomUUID?.() || Math.random().toString(36).slice(2) 
+    messageID: (globalThis.crypto as any).randomUUID?.() || Math.random().toString(36).slice(2),
+    isFile,
+    fileData
   }),
   onChatMessage: (
     callback: (message: {
@@ -38,4 +40,7 @@ contextBridge.exposeInMainWorld("api", {
   },
   connectToPeer: (ip: string) => ipcRenderer.send("connect-to-peer", ip),
   openFileDialog: () => ipcRenderer.invoke('open-file-dialog'),
+  readFileAsBase64: async (filePath: string) => {
+    return ipcRenderer.invoke('read-file', filePath);
+  }
 });
