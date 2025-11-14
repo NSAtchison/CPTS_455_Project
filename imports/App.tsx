@@ -74,7 +74,8 @@ export default function App() {
     const filePaths: string[] = await window.api.openFileDialog();
     
     const myID = window.api.getInstanceId();
-    const message = { username, text: filePaths[0], instanceID: myID, isFile: true };
+    const fileName: string = filePaths[0].split(/[/\\]/).pop() as string;
+    const message = { username, text: fileName, instanceID: myID, isFile: true };
 
     setMessages((previous) => [...previous, message]);
 
