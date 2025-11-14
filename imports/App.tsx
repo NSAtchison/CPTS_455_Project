@@ -81,7 +81,7 @@ export default function App() {
 
     setMessages((previous) => [...previous, message]);
 
-    window.api.sendChat(input, true, base64Data);
+    window.api.sendChat(fileName, true, base64Data);
 
     setInput("");
   };
