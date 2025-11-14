@@ -7,6 +7,7 @@ declare global {
         callback: (message: {
           username: string;
           text: string;
+          isFile: boolean;
           instanceID?: string;
         }) => void,
       ) => void;
@@ -15,7 +16,7 @@ declare global {
       getInstanceId: () => string;
       onPeerListUpdated: (cb: (peers: { id: string; ip: string}[]) => void) => void;
       connectToPeer: (ip: string) => void
-      openFileDialog: () => void;
+      openFileDialog: () => string[];
     };
   }
 }

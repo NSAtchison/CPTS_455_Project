@@ -22,7 +22,7 @@ export default function App() {
   const [username, setUsername] = useState("");
   const [hasUsername, setHasUsername] = useState(false);
   const [messages, setMessages] = useState<
-    { username: string; text: string }[]
+    { username: string; text: string; isFile: boolean }[]
   >([]);
   const [input, setInput] = useState("");
   const [peers, setPeers] = useState<{ id: string; ip: string }[]>([]);
@@ -61,7 +61,7 @@ export default function App() {
     if (!input.trim()) return;
 
     const myID = window.api.getInstanceId();
-    const message = { username, text: input, instanceID: myID };
+    const message = { username, text: input, instanceID: myID, isFile: false };
 
     setMessages((previous) => [...previous, message]);
 
@@ -71,8 +71,16 @@ export default function App() {
   };
 
   const uploadFile = async () => {
-    const filePaths = await window.api.openFileDialog();
-    console.log(filePaths);
+    const filePaths: string[] = await window.api.openFileDialog();
+    
+    const myID = window.api.getInstanceId();
+    const message = { username, text: filePaths[0], instanceID: myID, isFile: true };
+
+    setMessages((previous) => [...previous, message]);
+
+    window.api.sendChat(input);
+
+    setInput("");
   };
 
   const handleSettingsOpen = () => {
@@ -83,6 +91,10 @@ export default function App() {
   const handleClose = () => {
     setPeerListAnchorEl(undefined);
   };
+
+  const handleFileClick = (file_name: string) => {
+    console.log("file clicked: ", file_name);
+  }
 
   return (
     <Box display={"flex"} flexDirection={"column"} height={"100vh"} p={2}>
@@ -115,7 +127,16 @@ export default function App() {
       <Paper elevation={3} sx={{ flexGrow: 1, overflowY: "auto", mb: 2, p: 2 }}>
         {messages.map((message, index) => (
           <Typography key={index}>
-            {message.username}: {message.text}
+            {message.isFile ? (
+              <span
+                style={{ color: 'lightblue', textDecoration: 'underline', cursor: 'pointer' }}
+                onClick={() => handleFileClick(message.text)}
+              >
+                {message.text}
+              </span>
+            ) : (
+              <span>{message.username}: {message.text}</span>
+            )}
           </Typography>
         ))}
       </Paper>
