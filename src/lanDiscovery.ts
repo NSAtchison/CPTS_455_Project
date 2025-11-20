@@ -22,7 +22,7 @@ const localIPs = getLocalIPs();
 
 const discoveredPeers: { id: string; ip: string }[] = [];
 
-export const startLANDiscovery = (win: BrowserWindow, SOCKET_PORT: number, INSTANCE_ID: `${string}-${string}-${string}-${string}-${string}`) => {
+export const startLANDiscovery = (win: BrowserWindow, INSTANCE_ID: `${string}-${string}-${string}-${string}-${string}`) => {
   // UDP socket used for discovering other users
   const discoverySocket = dgram.createSocket("udp4");
 
@@ -51,17 +51,7 @@ export const startLANDiscovery = (win: BrowserWindow, SOCKET_PORT: number, INSTA
 
         // Reply to DISCOVERY_PORT to ensure the peer sees it
         discoverySocket.send(Buffer.from(response), rinfo.port, rinfo.address);
-
-        // connectToPeer(win, rinfo.address, SOCKET_PORT);
       }
-      // if (data.type === "LAN_CHAT_RESPONSE") {
-      //   console.log("Got response from:", rinfo.address);
-      //   // connectToPeer(win, rinfo.address, SOCKET_PORT);
-      //   win.webContents.send("peer-found", {
-      //     ip: rinfo.address,
-      //     id: data.id,
-      //   })
-      // }
     } catch {
       console.warn("Invalid discovery message:", message.toString());
     }

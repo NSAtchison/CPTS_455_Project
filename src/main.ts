@@ -121,7 +121,7 @@ const createWindow = (): void => {
     }
   });
 
-  startLANDiscovery(mainWindow, PORT, INSTANCE_ID);
+  startLANDiscovery(mainWindow, INSTANCE_ID);
 
   ipcMain.on("peer-found", (_, peer) => {
     const exists = discoveredPeers.some((p) => p.id === peer.id);
