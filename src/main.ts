@@ -74,14 +74,34 @@ const createWindow = (): void => {
   io.on("connection", (socket) => {
     console.log("New Socket.IO connection:", socket.id);
 
-    socket.on("chat-message", (message) => {
-      if (seenMessages.has(message.messageID)) return;
-      seenMessages.add(message.messageID)
+    socket.on("chat-message", async (message) => {
 
-      console.log("Message received:", message);
-      // Broadcast to all others
+      // Deduplicate
+      if (seenMessages.has(message.messageID)) return;
+      seenMessages.add(message.messageID);
+
+      console.log("Server received message:", message);
+
+      // If it's a file, save it here too.
+      if (message.isFile) {
+        const fileName = message.text;
+        const filePath = path.join(getAppDataPath(), fileName);
+
+        const buffer = Buffer.from(message.fileData, "base64");
+        await fs.promises.writeFile(filePath, buffer);
+
+        console.log("Saved file to:", filePath);
+      }
+
+      // Rebroadcast to all clients
       io.emit("chat-message", message);
-      // Send to Renderer
+
+      // Rebroadcast to other outgoing peer connections
+      for (const [peerIP, peerSocket] of connectedPeers) {
+        peerSocket.emit("chat-message", message);
+      }
+
+      // Send to renderer
       mainWindow.webContents.send("chat-message", message);
     });
   });
