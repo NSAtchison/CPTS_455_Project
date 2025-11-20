@@ -129,19 +129,32 @@ const createWindow = (): void => {
     });
 
     socket.on("chat-message", async (message) => {
+      // 1️⃣ Deduplicate
+      if (seenMessages.has(message.messageID)) return;
+      seenMessages.add(message.messageID);
+
+      console.log("Received message from peer:", message);
+
       if (message.isFile) {
-        console.log("Received message from peer:", message);
-        // Save file if message contains it.
         const fileName = message.text;
-        console.log("file name:", fileName);
         const filePath = path.join(getAppDataPath(), fileName);
-        
-        await fs.promises.writeFile(filePath, message.fileData, 'utf-8');
+
+        // Convert base64 -> Buffer
+        const buffer = Buffer.from(message.fileData, "base64");
+
+        await fs.promises.writeFile(filePath, buffer);
 
         console.log("Saved file to:", filePath);
-      } else {
-        console.log("Received message from peer:", message);
       }
+
+      io.emit("chat-message", message);
+
+      for (const [peerIP, peerSocket] of connectedPeers) {
+        if (peerSocket !== socket) {
+          peerSocket.emit("chat-message", message);
+        }
+      }
+
       mainWindow.webContents.send("chat-message", message);
     });
 
