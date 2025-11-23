@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, shell } from "electron";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { startLANDiscovery } from "./lanDiscovery";
@@ -36,13 +36,17 @@ ipcMain.handle('open-file-dialog', async () => {
 ipcMain.handle('read-file', async (_, filePath: string) => {
   const fs = await import('fs/promises');
   const buffer = await fs.readFile(filePath);
-  console.log(buffer.toString('base64'))
   return buffer.toString('base64');
 });
 
 const getAppDataPath = () => {
   return app.getPath('userData');
 };
+
+ipcMain.handle('open-file', async (_, fileName: string) => {
+  const filePath = path.join(getAppDataPath(), fileName);
+  await shell.openPath(filePath);
+});
 
 const createWindow = (): void => {
   // Create the browser window.
@@ -75,33 +79,26 @@ const createWindow = (): void => {
     console.log("New Socket.IO connection:", socket.id);
 
     socket.on("chat-message", async (message) => {
-
-      // Deduplicate
       if (seenMessages.has(message.messageID)) return;
       seenMessages.add(message.messageID);
 
-      console.log("Server received message:", message);
+      console.log("Message received:", message);
 
-      // If it's a file, save it here too.
-      if (message.isFile) {
-        const fileName = message.text;
-        const filePath = path.join(getAppDataPath(), fileName);
-
-        const buffer = Buffer.from(message.fileData, "base64");
-        await fs.promises.writeFile(filePath, buffer);
-
-        console.log("Saved file to:", filePath);
+      // If this is a file message, save the file locally as well
+      if (message.isFile && message.fileData) {
+        try {
+          const filePath = path.join(getAppDataPath(), message.text);
+          const buffer = Buffer.from(message.fileData, "base64");
+          await fs.promises.writeFile(filePath, buffer);
+          console.log("Saved inbound file to:", filePath);
+        } catch (error) {
+          console.error("Failed to save inbound file:", error);
+        }
       }
 
-      // Rebroadcast to all clients
+      // Broadcast to all others
       io.emit("chat-message", message);
-
-      // Rebroadcast to other outgoing peer connections
-      for (const [peerIP, peerSocket] of connectedPeers) {
-        peerSocket.emit("chat-message", message);
-      }
-
-      // Send to renderer
+      // Send to Renderer
       mainWindow.webContents.send("chat-message", message);
     });
   });
@@ -110,9 +107,22 @@ const createWindow = (): void => {
     console.log(`Socket.IO server listening on port ${PORT}`);
   });
 
-  ipcMain.on("send-chat", (_, message) => {
+  ipcMain.on("send-chat", async (_, message) => {
     if (seenMessages.has(message.messageID)) return;
-    seenMessages.add(message.messageID)
+    seenMessages.add(message.messageID);
+
+    // If this message contains file data, save it locally so it can be opened by filename
+    if (message.isFile && message.fileData) {
+      try {
+        const filePath = path.join(getAppDataPath(), message.text);
+        const buffer = Buffer.from(message.fileData, "base64");
+        await fs.promises.writeFile(filePath, buffer);
+        console.log("Saved local file to:", filePath);
+      } catch (error) {
+        console.error("Failed to save local file:", error);
+      }
+    }
+
     io.emit("chat-message", message);
 
     // Send to any outbound peer connections
@@ -121,7 +131,7 @@ const createWindow = (): void => {
     }
   });
 
-  startLANDiscovery(mainWindow, INSTANCE_ID);
+  startLANDiscovery(mainWindow, PORT, INSTANCE_ID);
 
   ipcMain.on("peer-found", (_, peer) => {
     const exists = discoveredPeers.some((p) => p.id === peer.id);
@@ -149,32 +159,23 @@ const createWindow = (): void => {
     });
 
     socket.on("chat-message", async (message) => {
-      // 1️⃣ Deduplicate
-      if (seenMessages.has(message.messageID)) return;
-      seenMessages.add(message.messageID);
-
-      console.log("Received message from peer:", message);
-
       if (message.isFile) {
+        console.log("Received message from peer:", message);
+        // Save file if message contains it.
         const fileName = message.text;
+        console.log("file name:", fileName);
         const filePath = path.join(getAppDataPath(), fileName);
 
-        // Convert base64 -> Buffer
-        const buffer = Buffer.from(message.fileData, "base64");
-
-        await fs.promises.writeFile(filePath, buffer);
-
-        console.log("Saved file to:", filePath);
-      }
-
-      io.emit("chat-message", message);
-
-      for (const [peerIP, peerSocket] of connectedPeers) {
-        if (peerSocket !== socket) {
-          peerSocket.emit("chat-message", message);
+        if (message.fileData) {
+          const buffer = Buffer.from(message.fileData, 'base64');
+          await fs.promises.writeFile(filePath, buffer);
+          console.log("Saved file to:", filePath);
+        } else {
+          console.warn("Received file message without fileData for:", fileName);
         }
+      } else {
+        console.log("Received message from peer:", message);
       }
-
       mainWindow.webContents.send("chat-message", message);
     });
 

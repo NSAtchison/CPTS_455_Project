@@ -18,6 +18,7 @@ declare global {
       connectToPeer: (ip: string) => void;
       openFileDialog: () => string[];
       readFileAsBase64: (string) => string;
+      openFile: (fileName: string) => void;
     };
   }
 }
