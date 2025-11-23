@@ -95,9 +95,9 @@ export default function App() {
     setPeerListAnchorEl(undefined);
   };
 
-  const handleFileDownload = (file_name: string) => {
-    console.log("file clicked: ", file_name);
-  }
+  const handleFileDownload = (fileName: string) => {
+    window.api.openFile(fileName);
+  };
 
   return (
     <Box display={"flex"} flexDirection={"column"} height={"100vh"} p={2}>
