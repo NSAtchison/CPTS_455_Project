@@ -16,14 +16,16 @@ contextBridge.exposeInMainWorld("api", {
   },
   getInstanceId: () => instanceID,
   sendChat: (text: string, isFile: boolean, fileData?: string) =>
-  ipcRenderer.send("send-chat", { 
-    username, 
-    text, 
-    instanceID, 
-    messageID: (globalThis.crypto as any).randomUUID?.() || Math.random().toString(36).slice(2),
-    isFile,
-    fileData
-  }),
+    ipcRenderer.send("send-chat", {
+      username,
+      text,
+      instanceID,
+      messageID:
+        (globalThis.crypto as any).randomUUID?.() ||
+        Math.random().toString(36).slice(2),
+      isFile,
+      fileData,
+    }),
   onChatMessage: (
     callback: (message: {
       username: string;
@@ -42,5 +44,8 @@ contextBridge.exposeInMainWorld("api", {
   openFileDialog: () => ipcRenderer.invoke('open-file-dialog'),
   readFileAsBase64: async (filePath: string) => {
     return ipcRenderer.invoke('read-file', filePath);
-  }
+  },
+  openFile: async (fileName: string) => {
+    return ipcRenderer.invoke('open-file', fileName);
+  },
 });
