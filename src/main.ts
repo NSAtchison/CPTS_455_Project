@@ -48,6 +48,33 @@ ipcMain.handle('open-file', async (_, fileName: string) => {
   await shell.openPath(filePath);
 });
 
+ipcMain.handle('export-metrics', async (_, metrics) => {
+    const { filePath, canceled } = await dialog.showSaveDialog({
+        title: "Save Metrics",
+        defaultPath: path.join(app.getPath("documents"), "lan-chat-metrics.json"),
+        filters: [{ name: "JSON", extensions: ["json"] }],
+    });
+
+    if (canceled || !filePath) {
+        return {
+            ok: false, reason: "canceled"
+        };
+    }
+
+    try {
+        await fs.promises.writeFile(
+            filePath,
+            JSON.stringify(metrics, null, 2),
+            "utf-8",
+        );
+        console.log("Metrics exported to", filePath);
+        return { ok: true, path: filePath };
+    } catch (error) {
+        console.error("Failed to export metrics:", error);
+        return { ok: false, reason: "error" };
+    }
+});
+
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
