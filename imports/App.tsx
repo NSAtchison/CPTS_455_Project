@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { SettingsMenu } from "./ui/SettingsMenu";
 import SettingsIcon from "@mui/icons-material/Settings";
-import ListIcon from '@mui/icons-material/List';
+import ListIcon from "@mui/icons-material/List";
 import { UploadFile } from "@mui/icons-material";
 
 type ChatMessageType = {
@@ -24,7 +24,11 @@ type ChatMessageType = {
   isFile: boolean;
   instanceID?: string;
   fileData?: string;
-}
+};
+
+const handleFileDownload = (fileName: string) => {
+  window.api.openFile(fileName);
+};
 
 export default function App() {
   const [username, setUsername] = useState("");
@@ -44,15 +48,17 @@ export default function App() {
   >([]);
 
   // 🔹 Queue of send times for our own messages (for latency measurement)
-  const pendingSentTimesRef = React.useRef<number[]>([]);
+  const pendingSentTimesReference = React.useRef<number[]>([]);
 
   const [editUsername, setEditUsername] = useState("");
   const [openSettings, setOpenSettings] = useState(false);
 
-  const [peerListAnchorEl, setPeerListAnchorEl] = React.useState<undefined | HTMLElement>(undefined);
-  const open = Boolean(peerListAnchorEl);
+  const [peerListAnchorElement, setPeerListAnchorElement] = React.useState<
+    undefined | HTMLElement
+  >(undefined);
+  const open = Boolean(peerListAnchorElement);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setPeerListAnchorEl(event.currentTarget);
+    setPeerListAnchorElement(event.currentTarget);
   };
 
   useEffect(() => {
@@ -60,18 +66,18 @@ export default function App() {
       const myID = window.api.getInstanceId();
       const now = performance.now();
       if (message.instanceID === myID) {
-        const sentAt = pendingSentTimesRef.current.shift();
-        if (sentAt != null) {
+        const sentAt = pendingSentTimesReference.current.shift();
+        if (sentAt !== undefined) {
           const latencyMs = now - sentAt;
 
           // Record latency sample
-          setLatencies((prev) => [...prev, latencyMs]);
+          setLatencies((previous) => [...previous, latencyMs]);
 
           // Record per-message delivery time (indexed)
-          setDeliveryTimes((prev) => {
-            const index = prev.length + 1;
+          setDeliveryTimes((previous) => {
+            const index = previous.length + 1;
             return [
-              ...prev,
+              ...previous,
               { index, sentAt, deliveredAt: now, latencyMs },
             ];
           });
@@ -85,10 +91,10 @@ export default function App() {
         // Approx original bytes of file from base64
         const base64Size = message.fileData.length;
         const approxBytes = Math.floor((base64Size * 3) / 4);
-        setBytesReceived((prev) => prev + approxBytes);
+        setBytesReceived((previous) => previous + approxBytes);
       } else if (!message.isFile && typeof message.text === "string") {
         const textBytes = new TextEncoder().encode(message.text).length;
-        setBytesReceived((prev) => prev + textBytes);
+        setBytesReceived((previous) => previous + textBytes);
       }
 
       setMessages((previous) => [...previous, message]);
@@ -98,7 +104,7 @@ export default function App() {
   useEffect(() => {
     window.api.onPeerListUpdated((newPeers) => {
       setPeers(newPeers);
-    })
+    });
   }, []);
 
   const handleSetUsername = () => {
@@ -115,10 +121,10 @@ export default function App() {
     const message = { username, text: input, instanceID: myID, isFile: false };
 
     const textBytes = new TextEncoder().encode(input).length;
-    setBytesSent((prev) => prev + textBytes);
+    setBytesSent((previous) => previous + textBytes);
 
     const sentAt = performance.now();
-    pendingSentTimesRef.current.push(sentAt);
+    pendingSentTimesReference.current.push(sentAt);
 
     setMessages((previous) => [...previous, message]);
 
@@ -150,14 +156,19 @@ export default function App() {
 
     const myID = window.api.getInstanceId();
     const fileName: string = filePath.split(/[/\\]/).pop() as string;
-    const message = { username, text: fileName, instanceID: myID, isFile: true };
+    const message = {
+      username,
+      text: fileName,
+      instanceID: myID,
+      isFile: true,
+    };
 
     const base64Size = base64Data.length;
     const approxBytes = Math.floor((base64Size * 3) / 4);
-    setBytesSent((prev) => prev + approxBytes);
+    setBytesSent((previous) => previous + approxBytes);
 
     const sentAt = performance.now();
-    pendingSentTimesRef.current.push(sentAt);
+    pendingSentTimesReference.current.push(sentAt);
 
     setMessages((previous) => [...previous, message]);
 
@@ -172,30 +183,26 @@ export default function App() {
   };
 
   const handleClose = () => {
-    setPeerListAnchorEl(undefined);
-  };
-
-  const handleFileDownload = (fileName: string) => {
-    window.api.openFile(fileName);
+    setPeerListAnchorElement(undefined);
   };
 
   const buildMetrics = () => {
     const totalMessages = messages.length;
 
     const messagesSent = messages.filter(
-        (m) => m.username === username && !m.isFile,
+      (m) => m.username === username && !m.isFile,
     ).length;
 
     const messagesRecieved = messages.filter(
-        (m) => m.username !== username && !m.isFile,
+      (m) => m.username !== username && !m.isFile,
     ).length;
 
     const filesSent = messages.filter(
-        (m) => m.username === username && m.isFile,
+      (m) => m.username === username && m.isFile,
     ).length;
 
     const filesRecieved = messages.filter(
-        (m) => m.username !== username && m.isFile,
+      (m) => m.username !== username && m.isFile,
     ).length;
 
     const endTime = new Date();
@@ -207,9 +214,9 @@ export default function App() {
     const avgLatencyMs =
       sampleCount > 0
         ? latencies.reduce((sum, v) => sum + v, 0) / sampleCount
-        : null;
-    const minLatencyMs = sampleCount > 0 ? Math.min(...latencies) : null;
-    const maxLatencyMs = sampleCount > 0 ? Math.max(...latencies) : null;
+        : undefined;
+    const minLatencyMs = sampleCount > 0 ? Math.min(...latencies) : undefined;
+    const maxLatencyMs = sampleCount > 0 ? Math.max(...latencies) : undefined;
 
     // 🔹 Throughput (messages/sec)
     const messagesSentPerSecond = messagesSent / duration;
@@ -258,12 +265,12 @@ export default function App() {
   const handleExportMetrics = async () => {
     const metrics = buildMetrics();
     try {
-        const result = await window.api.exportMetrics(metrics);
-        if (!result?.ok) {
-            console.error("Metrics export failed:", result?.reason);
-        }
+      const result = await window.api.exportMetrics(metrics);
+      if (!result?.ok) {
+        console.error("Metrics export failed:", result?.reason);
+      }
     } catch (error) {
-        console.error("Failed to export metrics:", error);
+      console.error("Failed to export metrics:", error);
     }
   };
 
@@ -279,12 +286,19 @@ export default function App() {
         <IconButton onClick={handleClick}>
           <ListIcon />
         </IconButton>
-        <Button variant="outlined" onClick={handleExportMetrics}>
+        <Button variant={"outlined"} onClick={handleExportMetrics}>
           Export Metrics
         </Button>
-        <Menu anchorEl={peerListAnchorEl} open={open} onClose={handleClose}>
+        <Menu
+          anchorEl={peerListAnchorElement}
+          open={open}
+          onClose={handleClose}
+        >
           {peers.map((peer) => (
-            <Button key={peer.id} onClick={() => window.api.connectToPeer(peer.ip)}>
+            <Button
+              key={peer.id}
+              onClick={() => window.api.connectToPeer(peer.ip)}
+            >
               Connect to {peer.ip}
             </Button>
           ))}
@@ -302,15 +316,23 @@ export default function App() {
         {messages.map((message, index) => (
           <Typography key={index}>
             {message.isFile ? (
-              <span>{message.username}:
-              <span
-                style={{ color: 'lightblue', textDecoration: 'underline', cursor: 'pointer' }}
-                onClick={() => handleFileDownload(message.text)}
-              >
-                {message.text}
-              </span></span>
+              <span>
+                {message.username}:
+                <span
+                  style={{
+                    color: "lightblue",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => handleFileDownload(message.text)}
+                >
+                  {message.text}
+                </span>
+              </span>
             ) : (
-              <span>{message.username}: {message.text}</span>
+              <span>
+                {message.username}: {message.text}
+              </span>
             )}
           </Typography>
         ))}

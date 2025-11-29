@@ -16,13 +16,17 @@ const getLocalIPs = () => {
     }
   }
   return ips;
-}
+};
 
 const localIPs = getLocalIPs();
 
 const discoveredPeers: { id: string; ip: string }[] = [];
 
-export const startLANDiscovery = (win: BrowserWindow, SOCKET_PORT: number, INSTANCE_ID: `${string}-${string}-${string}-${string}-${string}`) => {
+export const startLANDiscovery = (
+  win: BrowserWindow,
+  SOCKET_PORT: number,
+  INSTANCE_ID: `${string}-${string}-${string}-${string}-${string}`,
+) => {
   // UDP socket used for discovering other users
   const discoverySocket = dgram.createSocket("udp4");
 
@@ -33,7 +37,7 @@ export const startLANDiscovery = (win: BrowserWindow, SOCKET_PORT: number, INSTA
       if (localIPs.includes(rinfo.address)) return; // ignore self
 
       const peer = { id: data.id, ip: rinfo.address };
-      const exists = discoveredPeers.some(p => p.id === peer.id);
+      const exists = discoveredPeers.some((p) => p.id === peer.id);
 
       if (!exists) {
         discoveredPeers.push(peer);
@@ -74,15 +78,15 @@ export const startLANDiscovery = (win: BrowserWindow, SOCKET_PORT: number, INSTA
 
   // Broadcast our presence every 5 seconds
   setInterval(() => {
-    const msg = JSON.stringify({
+    const message = JSON.stringify({
       type: "LAN_CHAT_DISCOVERY",
       id: INSTANCE_ID,
     });
-    
+
     discoverySocket.send(
-      Buffer.from(msg),
+      Buffer.from(message),
       0,
-      msg.length,
+      message.length,
       DISCOVERY_PORT,
       "255.255.255.255",
     );
