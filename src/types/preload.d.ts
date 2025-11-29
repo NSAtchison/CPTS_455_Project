@@ -15,12 +15,16 @@ declare global {
       sendChat: (text: string, isFile: boolean, fileData?: string) => void;
       setUsername: (name: string) => void;
       getInstanceId: () => string;
-      onPeerListUpdated: (cb: (peers: { id: string; ip: string}[]) => void) => void;
+      onPeerListUpdated: (
+        callback: (peers: { id: string; ip: string }[]) => void,
+      ) => void;
       connectToPeer: (ip: string) => void;
       openFileDialog: () => string[];
       readFileAsBase64: (string) => string;
       openFile: (fileName: string) => void;
-      exportMetrics: (metrics: unknown) => Promise<{ ok: boolean; path?: string; reason?: string }>;
+      exportMetrics: (
+        metrics: unknown,
+      ) => Promise<{ ok: boolean; path?: string; reason?: string }>;
     };
   }
 }

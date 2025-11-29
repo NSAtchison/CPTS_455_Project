@@ -35,7 +35,9 @@ contextBridge.exposeInMainWorld("api", {
       fileData?: string;
     }) => void,
   ) => ipcRenderer.on("chat-message", (_, message) => callback(message)),
-  onPeerListUpdated: (callback: (peers: { id: string; ip: string }[]) => void) => {
+  onPeerListUpdated: (
+    callback: (peers: { id: string; ip: string }[]) => void,
+  ) => {
     ipcRenderer.removeAllListeners("peer-list-updated");
     ipcRenderer.on("peer-list-updated", (_, peers) => {
       console.log("Renderer received peer list:", peers); // helpful debug
@@ -43,12 +45,12 @@ contextBridge.exposeInMainWorld("api", {
     });
   },
   connectToPeer: (ip: string) => ipcRenderer.send("connect-to-peer", ip),
-  openFileDialog: () => ipcRenderer.invoke('open-file-dialog'),
+  openFileDialog: () => ipcRenderer.invoke("open-file-dialog"),
   readFileAsBase64: async (filePath: string) => {
-    return ipcRenderer.invoke('read-file', filePath);
+    return ipcRenderer.invoke("read-file", filePath);
   },
   openFile: async (fileName: string) => {
-    return ipcRenderer.invoke('open-file', fileName);
+    return ipcRenderer.invoke("open-file", fileName);
   },
   exportMetrics: async (metrics: unknown) => {
     return ipcRenderer.invoke("export-metrics", metrics);
