@@ -1,0 +1,97 @@
+{
+  "username": "Nathan",
+  "startTime": "2025-11-29T03:20:14.860Z",
+  "endTime": "2025-11-29T03:23:00.054Z",
+  "totals": {
+    "totalMessages": 20,
+    "messagesSent": 4,
+    "messagesRecieved": 4,
+    "filesSent": 6,
+    "filesRecieved": 6
+  },
+  "peers": {
+    "currentPeerCount": 1,
+    "peers": [
+      {
+        "id": "395b5fff-57b4-4a17-8b4a-5342ade5aa93",
+        "ip": "172.24.110.131"
+      }
+    ]
+  },
+  "latency": {
+    "sampleCount": 10,
+    "avgMs": 594.1700000286103,
+    "minMs": 10.900000095367432,
+    "maxMs": 2905.600000023842,
+    "perMessage": [
+      {
+        "index": 1,
+        "sentAt": 31409.100000023842,
+        "deliveredAt": 31465.5,
+        "latencyMs": 56.39999997615814
+      },
+      {
+        "index": 2,
+        "sentAt": 56899.5,
+        "deliveredAt": 56911.200000047684,
+        "latencyMs": 11.700000047683716
+      },
+      {
+        "index": 3,
+        "sentAt": 71906.20000004768,
+        "deliveredAt": 72826.60000002384,
+        "latencyMs": 920.3999999761581
+      },
+      {
+        "index": 4,
+        "sentAt": 75366.30000007153,
+        "deliveredAt": 75691.70000004768,
+        "latencyMs": 325.39999997615814
+      },
+      {
+        "index": 5,
+        "sentAt": 102718.39999997616,
+        "deliveredAt": 102729.30000007153,
+        "latencyMs": 10.900000095367432
+      },
+      {
+        "index": 6,
+        "sentAt": 107806.5,
+        "deliveredAt": 109442.80000007153,
+        "latencyMs": 1636.3000000715256
+      },
+      {
+        "index": 7,
+        "sentAt": 109808.5,
+        "deliveredAt": 109823.70000004768,
+        "latencyMs": 15.200000047683716
+      },
+      {
+        "index": 8,
+        "sentAt": 113801.70000004768,
+        "deliveredAt": 116707.30000007153,
+        "latencyMs": 2905.600000023842
+      },
+      {
+        "index": 9,
+        "sentAt": 147946,
+        "deliveredAt": 147968.10000002384,
+        "latencyMs": 22.100000023841858
+      },
+      {
+        "index": 10,
+        "sentAt": 152753,
+        "deliveredAt": 152790.70000004768,
+        "latencyMs": 37.700000047683716
+      }
+    ]
+  },
+  "throughput": {
+    "bytesSent": 29340449,
+    "bytesReceived": 51704257,
+    "bytesSentPerSecond": 177612.07428841243,
+    "bytesReceivedPerSecond": 312991.13163916365,
+    "messagesSentPerSecond": 0.024213954501979492,
+    "messagesRecievedPerSecond": 0.024213954501979492
+  }
+}
