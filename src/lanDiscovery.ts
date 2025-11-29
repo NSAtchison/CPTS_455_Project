@@ -43,6 +43,8 @@ export const startLANDiscovery = (
         discoveredPeers.push(peer);
         console.log("Discovered peer:", peer);
         win.webContents.send("peer-list-updated", discoveredPeers);
+      } else {
+        return;
       }
 
       if (data.type === "LAN_CHAT_DISCOVERY") {
@@ -55,17 +57,7 @@ export const startLANDiscovery = (
 
         // Reply to DISCOVERY_PORT to ensure the peer sees it
         discoverySocket.send(Buffer.from(response), rinfo.port, rinfo.address);
-
-        // connectToPeer(win, rinfo.address, SOCKET_PORT);
       }
-      // if (data.type === "LAN_CHAT_RESPONSE") {
-      //   console.log("Got response from:", rinfo.address);
-      //   // connectToPeer(win, rinfo.address, SOCKET_PORT);
-      //   win.webContents.send("peer-found", {
-      //     ip: rinfo.address,
-      //     id: data.id,
-      //   })
-      // }
     } catch {
       console.warn("Invalid discovery message:", message.toString());
     }
