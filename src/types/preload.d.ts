@@ -18,7 +18,7 @@ declare global {
       onPeerListUpdated: (cb: (peers: { id: string; ip: string}[]) => void) => void;
       connectToPeer: (ip: string) => void;
       openFileDialog: () => string[];
-      readFileAsBase64: (string) => string;
+      readFileAsBase64: (string) => {ok: boolean, data: string, error?: string, size?: number, max?: number};
       openFile: (fileName: string) => void;
       exportMetrics: (metrics: unknown) => Promise<{ ok: boolean; path?: string; reason?: string }>;
     };

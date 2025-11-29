@@ -35,8 +35,18 @@ ipcMain.handle('open-file-dialog', async () => {
 
 ipcMain.handle('read-file', async (_, filePath: string) => {
   const fs = await import('fs/promises');
+  const stat = await fs.stat(filePath);
+
+  // Limit the maximum size file sent between users
+  const MAX_FILE_SIZE = 20 * 1024 * 1024;
+
+  if(stat.size > MAX_FILE_SIZE) {
+    return { ok: false, error: "FILE_TOO_LARGE", size: stat.size, max: MAX_FILE_SIZE}
+  }
+  
   const buffer = await fs.readFile(filePath);
-  return buffer.toString('base64');
+  const base64 = buffer.toString('base64');
+  return { ok: true, data: base64 };
 });
 
 const getAppDataPath = () => {
@@ -100,6 +110,7 @@ const createWindow = (): void => {
   const httpServer = createServer();
   const io = new Server(httpServer, {
     cors: { origin: "*" },
+    maxHttpBufferSize: 20 * 1024 * 1024,
   });
 
   io.on("connection", (socket) => {
