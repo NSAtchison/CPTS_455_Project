@@ -40,10 +40,15 @@ ipcMain.handle("read-file", async (_, filePath: string) => {
   // Limit the maximum size file sent between users
   const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
-  if(stat.size > MAX_FILE_SIZE) {
-    return { ok: false, error: "FILE_TOO_LARGE", size: stat.size, max: MAX_FILE_SIZE}
+  if (stat.size > MAX_FILE_SIZE) {
+    return {
+      ok: false,
+      error: "FILE_TOO_LARGE",
+      size: stat.size,
+      max: MAX_FILE_SIZE,
+    };
   }
-  
+
   const buffer = await fs.readFile(filePath);
   const base64 = buffer.toString("base64");
   return { ok: true, data: base64 };

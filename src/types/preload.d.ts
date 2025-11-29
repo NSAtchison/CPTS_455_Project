@@ -20,7 +20,13 @@ declare global {
       ) => void;
       connectToPeer: (ip: string) => void;
       openFileDialog: () => string[];
-      readFileAsBase64: (string) => {ok: boolean, data: string, error?: string, size?: number, max?: number};
+      readFileAsBase64: (string) => {
+        ok: boolean;
+        data: string;
+        error?: string;
+        size?: number;
+        max?: number;
+      };
       openFile: (fileName: string) => void;
       exportMetrics: (
         metrics: unknown,

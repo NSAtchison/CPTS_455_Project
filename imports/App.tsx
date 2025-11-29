@@ -140,19 +140,19 @@ export default function App() {
     const filePath: string = filePaths[0];
     const fileRead = await window.api.readFileAsBase64(filePath);
 
-    if(!fileRead.ok) {
+    if (!fileRead.ok) {
       if (fileRead.error === "FILE_TOO_LARGE") {
         alert(
-          `File is too large (${(fileRead.size / (1024*1024)).toFixed(2)} MB). ` +
-          `Max allowed is ${(fileRead.max / (1024*1024)).toFixed(2)} MB.`
+          `File is too large (${(fileRead.size / (1024 * 1024)).toFixed(2)} MB). ` +
+            `Max allowed is ${(fileRead.max / (1024 * 1024)).toFixed(2)} MB.`,
         );
       } else {
-        alert('Failed to read file for upload.');
+        alert("Failed to read file for upload.");
       }
       return;
     }
 
-    const base64Data = fileRead.data
+    const base64Data = fileRead.data;
 
     const myID = window.api.getInstanceId();
     const fileName: string = filePath.split(/[/\\]/).pop() as string;
