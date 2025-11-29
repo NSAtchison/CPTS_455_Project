@@ -27,6 +27,8 @@ export default function App() {
   const [input, setInput] = useState("");
   const [peers, setPeers] = useState<{ id: string; ip: string }[]>([]);
 
+  const [startTime] = useState(() => new Date());
+
   const [editUsername, setEditUsername] = useState("");
   const [openSettings, setOpenSettings] = useState(false);
 
@@ -99,6 +101,55 @@ export default function App() {
     window.api.openFile(fileName);
   };
 
+  const buildMetrics = () => {
+    const totlaMessagess = messages.length;
+
+    const messagesSent = messages.filter(
+        (m) => m.username === username && !m.isFile,
+    ).length;
+
+    const messagesRecieved = messages.filter(
+        (m) => m.username !== username && !m.isFile,
+    ).length;
+
+    const filesSent = messages.filter(
+        (m) => m.username === username && m.isFile,
+    ).length;
+
+    const filesRecieved = messages.filter(
+        (m) => m.username !== username && m.isFile,
+    ).length;
+
+    return {
+        username,
+        startTime: startTime.toISOString(),
+        endTime: new Date().toISOString(),
+        totals: {
+            totlaMessagess,
+            messagesSent,
+            messagesRecieved,
+            filesSent,
+            filesRecieved,
+        },
+        peers: {
+            currentPeerCount: peers.length,
+            peers,
+        },
+    };
+  };
+
+  const handleExportMetrics = async () => {
+    const metrics = buildMetrics();
+    try {
+        const result = await window.api.exportMetrics(metrics);
+        if (!result?.ok) {
+            console.error("Metrics export failed:", result?.reason);
+        }
+    } catch (error) {
+        console.error("Failed to export metrics:", error);
+    }
+  };
+
   return (
     <Box display={"flex"} flexDirection={"column"} height={"100vh"} p={2}>
       <Stack direction={"row"}>
@@ -111,6 +162,9 @@ export default function App() {
         <IconButton onClick={handleClick}>
           <ListIcon />
         </IconButton>
+        <Button variant="outlined" onClick={handleExportMetrics}>
+          Export Metrics
+        </Button>
         <Menu anchorEl={peerListAnchorEl} open={open} onClose={handleClose}>
           {peers.map((peer) => (
             <Button key={peer.id} onClick={() => window.api.connectToPeer(peer.ip)}>

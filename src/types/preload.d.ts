@@ -19,6 +19,7 @@ declare global {
       openFileDialog: () => string[];
       readFileAsBase64: (string) => string;
       openFile: (fileName: string) => void;
+      exportMetrics: (metrics: unknown) => Promise<{ ok: boolean; path?: string; reason?: string }>;
     };
   }
 }

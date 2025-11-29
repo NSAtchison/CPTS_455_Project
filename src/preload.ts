@@ -48,4 +48,7 @@ contextBridge.exposeInMainWorld("api", {
   openFile: async (fileName: string) => {
     return ipcRenderer.invoke('open-file', fileName);
   },
+  exportMetrics: async (metrics: unknown) => {
+    return ipcRenderer.invoke("export-metrics", metrics);
+  },
 });
