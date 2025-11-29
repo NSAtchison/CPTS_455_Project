@@ -18,16 +18,33 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import ListIcon from '@mui/icons-material/List';
 import { UploadFile } from "@mui/icons-material";
 
+type ChatMessageType = {
+  username: string;
+  text: string;
+  isFile: boolean;
+  instanceID?: string;
+  fileData?: string;
+}
+
 export default function App() {
   const [username, setUsername] = useState("");
   const [hasUsername, setHasUsername] = useState(false);
-  const [messages, setMessages] = useState<
-    { username: string; text: string; isFile: boolean }[]
-  >([]);
+  const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [input, setInput] = useState("");
   const [peers, setPeers] = useState<{ id: string; ip: string }[]>([]);
 
   const [startTime] = useState(() => new Date());
+
+  // 🔹 Metrics state
+  const [latencies, setLatencies] = useState<number[]>([]);
+  const [bytesSent, setBytesSent] = useState(0);
+  const [bytesReceived, setBytesReceived] = useState(0);
+  const [deliveryTimes, setDeliveryTimes] = useState<
+    { index: number; sentAt: number; deliveredAt: number; latencyMs: number }[]
+  >([]);
+
+  // 🔹 Queue of send times for our own messages (for latency measurement)
+  const pendingSentTimesRef = React.useRef<number[]>([]);
 
   const [editUsername, setEditUsername] = useState("");
   const [openSettings, setOpenSettings] = useState(false);
@@ -41,7 +58,39 @@ export default function App() {
   useEffect(() => {
     window.api.onChatMessage((message) => {
       const myID = window.api.getInstanceId();
-      if (message.instanceID === myID) return;
+      const now = performance.now();
+      if (message.instanceID === myID) {
+        const sentAt = pendingSentTimesRef.current.shift();
+        if (sentAt != null) {
+          const latencyMs = now - sentAt;
+
+          // Record latency sample
+          setLatencies((prev) => [...prev, latencyMs]);
+
+          // Record per-message delivery time (indexed)
+          setDeliveryTimes((prev) => {
+            const index = prev.length + 1;
+            return [
+              ...prev,
+              { index, sentAt, deliveredAt: now, latencyMs },
+            ];
+          });
+        }
+
+        // Don't re-add our own messages to UI (already added on send)
+        return;
+      }
+      // 🔹 Messages from other users – track bytes received
+      if (message.isFile && message.fileData) {
+        // Approx original bytes of file from base64
+        const base64Size = message.fileData.length;
+        const approxBytes = Math.floor((base64Size * 3) / 4);
+        setBytesReceived((prev) => prev + approxBytes);
+      } else if (!message.isFile && typeof message.text === "string") {
+        const textBytes = new TextEncoder().encode(message.text).length;
+        setBytesReceived((prev) => prev + textBytes);
+      }
+
       setMessages((previous) => [...previous, message]);
     });
   }, []);
@@ -65,6 +114,12 @@ export default function App() {
     const myID = window.api.getInstanceId();
     const message = { username, text: input, instanceID: myID, isFile: false };
 
+    const textBytes = new TextEncoder().encode(input).length;
+    setBytesSent((prev) => prev + textBytes);
+
+    const sentAt = performance.now();
+    pendingSentTimesRef.current.push(sentAt);
+
     setMessages((previous) => [...previous, message]);
 
     window.api.sendChat(input, false);
@@ -74,12 +129,21 @@ export default function App() {
 
   const uploadFile = async () => {
     const filePaths: string[] = await window.api.openFileDialog();
+    if (!filePaths || !filePaths[0]) return;
+
     const filePath: string = filePaths[0];
     const base64Data = await window.api.readFileAsBase64(filePath);
 
     const myID = window.api.getInstanceId();
     const fileName: string = filePath.split(/[/\\]/).pop() as string;
     const message = { username, text: fileName, instanceID: myID, isFile: true };
+
+    const base64Size = base64Data.length;
+    const approxBytes = Math.floor((base64Size * 3) / 4);
+    setBytesSent((prev) => prev + approxBytes);
+
+    const sentAt = performance.now();
+    pendingSentTimesRef.current.push(sentAt);
 
     setMessages((previous) => [...previous, message]);
 
@@ -102,7 +166,7 @@ export default function App() {
   };
 
   const buildMetrics = () => {
-    const totlaMessagess = messages.length;
+    const totalMessages = messages.length;
 
     const messagesSent = messages.filter(
         (m) => m.username === username && !m.isFile,
@@ -120,21 +184,60 @@ export default function App() {
         (m) => m.username !== username && m.isFile,
     ).length;
 
+    const endTime = new Date();
+
+    const duration = (endTime.getTime() - startTime.getTime()) / 1000 || 1;
+
+    // 🔹 Latency stats
+    const sampleCount = latencies.length;
+    const avgLatencyMs =
+      sampleCount > 0
+        ? latencies.reduce((sum, v) => sum + v, 0) / sampleCount
+        : null;
+    const minLatencyMs = sampleCount > 0 ? Math.min(...latencies) : null;
+    const maxLatencyMs = sampleCount > 0 ? Math.max(...latencies) : null;
+
+    // 🔹 Throughput (messages/sec)
+    const messagesSentPerSecond = messagesSent / duration;
+    const messagesRecievedPerSecond = messagesRecieved / duration;
+
+    // 🔹 Throughput (bytes/sec)
+    const bytesSentPerSecond = bytesSent / duration;
+    const bytesReceivedPerSecond = bytesReceived / duration;
+
     return {
-        username,
-        startTime: startTime.toISOString(),
-        endTime: new Date().toISOString(),
-        totals: {
-            totlaMessagess,
-            messagesSent,
-            messagesRecieved,
-            filesSent,
-            filesRecieved,
-        },
-        peers: {
-            currentPeerCount: peers.length,
-            peers,
-        },
+      username,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
+      totals: {
+        totalMessages,
+        messagesSent,
+        messagesRecieved,
+        filesSent,
+        filesRecieved,
+      },
+      peers: {
+        currentPeerCount: peers.length,
+        peers,
+      },
+      // 🔹 New metrics block: latency
+      latency: {
+        sampleCount,
+        avgMs: avgLatencyMs,
+        minMs: minLatencyMs,
+        maxMs: maxLatencyMs,
+        // per-message delivery times for your own messages
+        perMessage: deliveryTimes,
+      },
+      // 🔹 New metrics block: throughput
+      throughput: {
+        bytesSent,
+        bytesReceived,
+        bytesSentPerSecond,
+        bytesReceivedPerSecond,
+        messagesSentPerSecond,
+        messagesRecievedPerSecond,
+      },
     };
   };
 

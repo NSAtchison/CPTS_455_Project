@@ -9,6 +9,7 @@ declare global {
           text: string;
           isFile: boolean;
           instanceID?: string;
+          fileData?: string;
         }) => void,
       ) => void;
       sendChat: (text: string, isFile: boolean, fileData?: string) => void;

@@ -30,7 +30,9 @@ contextBridge.exposeInMainWorld("api", {
     callback: (message: {
       username: string;
       text: string;
+      isFile: boolean;
       instanceID?: string;
+      fileData?: string;
     }) => void,
   ) => ipcRenderer.on("chat-message", (_, message) => callback(message)),
   onPeerListUpdated: (callback: (peers: { id: string; ip: string }[]) => void) => {
